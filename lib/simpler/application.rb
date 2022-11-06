@@ -27,14 +27,22 @@ module Simpler
     end
 
     def call(env)
-      route = @router.route_for(env)
-      controller = route.controller.new(env)
-      action = route.action
-
-      make_response(controller, action)
+      route = @router.route_for(env) 
+      if route.nil?
+        make_response_not_found
+      else
+        env[:id] = route.params[":id"]
+        controller = route.controller.new(env)
+        action = route.action
+        make_response(controller, action)
+      end
     end
 
     private
+
+    def make_response_not_found
+      Rack::Response.new(["Page not found"], 404).finish
+    end
 
     def require_app
       Dir["#{Simpler.root}/app/**/*.rb"].each { |file| require file }
